@@ -1,0 +1,151 @@
+1. การประกาศตัวแปร
+	private TextField showNumber; // Display area
+private string currentInput = ""; // Store user input
+
+showNumber: ตัวแปรนี้เก็บการอ้างอิงถึง TextField ที่จะแสดงผลลัพธ์หรือข้อมูลที่ผู้ใช้กรอกไว้
+currentInput: ตัวแปรนี้เก็บข้อมูลที่ผู้ใช้กรอกไว้ในระหว่างการคำนวณ เช่น ตัวเลขหรือสัญลักษณ์ทางคณิตศาสตร์
+
+2. ฟังก์ชั่น Start()
+
+	void Start()
+{
+    // Call InitializeUI at the start to set up the UI components
+    InitializeUI();
+}
+
+ฟังก์ชั่น Start() จะถูกเรียกใช้งานเมื่อเริ่มต้นการทำงานของ GameObject ซึ่งในที่นี้ เราจะเรียกใช้ฟังก์ชั่น InitializeUI() เพื่อทำการตั้งค่าต่างๆ ของ UI เช่น การเชื่อมโยงปุ่มต่างๆ
+
+3. ฟังก์ชั่น InitializeUI()
+	
+void InitializeUI()
+{
+    var root = GetComponent<UIDocument>().rootVisualElement;
+    // Check if the root is found
+    if (root == null)
+    {
+        Debug.LogError("UIDocument rootVisualElement is null!");
+        return;
+    }
+ฟังก์ชั่น InitializeUI() จะเริ่มต้นโดยการค้นหาค่า rootVisualElement ซึ่งเป็นองค์ประกอบหลักของ UI จาก UIDocument ที่เชื่อมโยงกับ GameObject ของสคริปต์
+ถ้าไม่พบ rootVisualElement จะมีการแสดงข้อความแสดงข้อผิดพลาด
+
+4. การหาตัวแปร TextField และการตั้งค่าเป็น read-only
+
+showNumber = root.Q<TextField>("Show_number");
+if (showNumber == null)
+{
+    Debug.LogError("Show_number TextField not found!");
+    return;
+}
+showNumber.isReadOnly = true; // Prevent manual input
+
+ใช้ root.Q<TextField>("Show_number") เพื่อค้นหา TextField ที่มีชื่อว่า "Show_number"
+ตั้งค่า isReadOnly = true เพื่อป้องกันไม่ให้ผู้ใช้สามารถพิมพ์ในช่องนี้เองได้ (จะใช้แสดงผลลัพธ์เท่านั้น)
+
+5. การลงทะเบียนปุ่มต่างๆ
+
+// Register number buttons
+RegisterButton(root, "one", "1");
+RegisterButton(root, "two", "2");
+// ... (ปุ่มอื่นๆ เช่น 3, 4, 5, 6, 7, 8, 9, 0)
+
+// Register operator buttons
+RegisterButton(root, "addition", " + ");
+RegisterButton(root, "minus", " - ");
+// ... (ปุ่มอื่นๆ เช่น *, /)
+
+ทุกๆ ปุ่มที่เกี่ยวกับตัวเลขหรือสัญลักษณ์จะถูกเชื่อมโยงไปยังฟังก์ชั่น RegisterButton()
+เมื่อผู้ใช้กดปุ่ม ฟังก์ชั่น RegisterButton() จะเพิ่มค่าที่ผู้ใช้กดเข้าไปใน currentInput
+
+6. การลงทะเบียนปุ่ม "=" และ "C" (ลบ)
+
+var equalButton = root.Q<Button>("equal");
+if (equalButton != null)
+{
+    equalButton.clicked += CalculateResult;
+}
+else
+{
+    Debug.LogError("Equal button not found!");
+}
+
+// Register delete button
+var deleteButton = root.Q<Button>("delete");
+if (deleteButton != null)
+{
+    deleteButton.clicked += ClearInput;
+}
+else
+{
+    Debug.LogError("Delete button not found!");
+}
+ปุ่ม "=" จะเชื่อมโยงกับฟังก์ชั่น CalculateResult() ซึ่งจะคำนวณผลลัพธ์จาก currentInput
+ปุ่ม "C" จะเชื่อมโยงกับฟังก์ชั่น ClearInput() ซึ่งจะล้างข้อมูลใน currentInput และลบผลลัพธ์ที่แสดงใน TextField
+
+
+7. ฟังก์ชั่น RegisterButton()
+void RegisterButton(VisualElement root, string buttonName, string value)
+{
+    var button = root.Q<Button>(buttonName);
+    if (button != null)
+    {
+        button.clicked += () =>
+        {
+            Debug.Log($"Button {buttonName} clicked!"); // Debugging statement to check button press
+            AddToInput(value);
+        };
+    }
+    else
+    {
+        Debug.LogError($"Button '{buttonName}' not found!");
+    }
+}
+
+ฟังก์ชั่นนี้รับพารามิเตอร์ 2 ตัว ได้แก่ buttonName (ชื่อของปุ่ม) และ value (ค่าที่จะเพิ่มเข้าไปใน currentInput เมื่อผู้ใช้กดปุ่ม)
+ฟังก์ชั่นนี้ค้นหาปุ่มใน root ด้วยชื่อที่ระบุ หากพบปุ่มจะเชื่อมโยงเหตุการณ์ clicked ของปุ่มให้ทำการเพิ่มค่าที่ผู้ใช้กดไปใน currentInput
+
+8. ฟังก์ชั่น AddToInput()
+
+void AddToInput(string value)
+{
+    currentInput += value; // Append the value (number or operator) to the current input
+    showNumber.value = currentInput; // Update the display with current input
+}
+ฟังก์ชั่นนี้จะเพิ่มค่าที่ผู้ใช้กดเข้าไปใน currentInput และอัพเดตค่าใน TextField ให้แสดงค่าที่ผู้ใช้กรอก
+
+9. ฟังก์ชั่น CalculateResult()
+void CalculateResult()
+{
+    try
+    {
+        // Use C#'s built-in method to evaluate the expression
+        var result = new System.Data.DataTable().Compute(currentInput, null);
+        currentInput = result.ToString(); // Set result as the current input
+        showNumber.value = currentInput; // Update the display with result
+    }
+    catch (Exception e)
+    {
+        // If there's an error (e.g., invalid syntax), show an error message
+        currentInput = "Error";
+        showNumber.value = currentInput;
+        Debug.LogError($"Calculation error: {e.Message}");
+    }
+}
+
+ฟังก์ชั่นนี้จะใช้ System.Data.DataTable().Compute() เพื่อคำนวณผลลัพธ์จากข้อความที่ผู้ใช้กรอกใน currentInput
+หากการคำนวณสำเร็จ, ผลลัพธ์จะถูกแสดงใน TextField
+หากเกิดข้อผิดพลาด (เช่น รูปแบบไม่ถูกต้อง), จะมีการแสดงข้อความ "Error" ใน TextField
+
+10. ฟังก์ชั่น ClearInput()
+void ClearInput()
+{
+    currentInput = ""; // Reset the input string
+    showNumber.value = currentInput; // Clear the display
+}
+
+
+ฟังก์ชั่นนี้จะล้างข้อมูลทั้งหมดใน currentInput และใน TextField
+สรุป:
+โค้ดนี้จะสร้างคอนโทรลเลอร์สำหรับเครื่องคิดเลขใน Unity ที่ใช้ UIElements ในการสร้างอินเทอร์เฟซผู้ใช้ โดยมีฟังก์ชั่นหลักๆ เช่น การเพิ่มตัวเลขหรือสัญลักษณ์, การคำนวณผลลัพธ์, และการลบข้อมูลที่กรอกไป
+
+หวังว่าคำอธิบายนี้จะช่วยให้เข้าใจการทำงานของโค้ดได้ดีขึ้นนะครับ! ถ้ามีคำถามเพิ่มเติมก็ถามได้เลยครับ :)
